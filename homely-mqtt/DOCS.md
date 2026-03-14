@@ -7,6 +7,28 @@ the addon is running.
 > **Note:** The Homely API is available to subscribers upon request from
 > Homely support.
 
+## Prerequisites
+
+Before starting this addon you need:
+
+1. **Mosquitto broker addon** — Install it from the addon store
+   (*Settings → Add-ons → Add-on Store → Mosquitto broker*) and start it.
+
+2. **MQTT integration in Home Assistant** — Go to
+   *Settings → Devices & Services → + Add Integration → MQTT*
+   and follow the prompts. If you are using the Mosquitto addon,
+   Home Assistant will likely offer to configure it automatically.
+
+That's it. No extra YAML, no `configuration.yaml` entries needed.
+
+## Quick start
+
+1. Install and configure this addon (see **Configuration** below).
+2. Start the addon.
+3. Go to *Settings → Devices & Services → MQTT* — your Homely devices
+   will appear there automatically within a few seconds.
+4. Entities are immediately available for dashboards, automations, and scripts.
+
 ## How it works
 
 - On startup, the addon logs into the Homely cloud API, discovers all devices
@@ -39,6 +61,83 @@ the addon is running.
 | Smoke | `binary_sensor` | Model name contains "smoke" |
 | Moisture / flood | `binary_sensor` | Model name contains "water", "flood", or "moisture" |
 | Vibration / glass-break | `binary_sensor` | Model name contains "glass" |
+
+## Using the data in Home Assistant
+
+### Finding your entities
+
+After the addon starts, open *Settings → Devices & Services → MQTT*.
+You will find:
+
+- A **Gateway** device with alarm state, link quality, connectivity,
+  battery and tamper entities.
+- One **device card** per Homely sensor (door sensors, motion detectors,
+  temperature probes, etc.).
+
+All entities are also searchable from the HA search bar and can be added to
+any dashboard via the normal UI.
+
+> **Read-only:** The Homely API does not support changing the alarm state
+> remotely, so there is no arm/disarm control. The integration is
+> monitoring only.
+
+### Example automations
+
+#### Notify when the alarm is triggered
+
+```yaml
+automation:
+  - alias: "Homely alarm triggered"
+    trigger:
+      - platform: state
+        entity_id: sensor.gateway_alarm_alarmstate
+        to: "Alarmed"
+    action:
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "Alarm has been triggered!"
+          title: "Homely Alert"
+```
+
+#### Notify when a door is opened while armed
+
+```yaml
+automation:
+  - alias: "Front door opened while armed"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.frontdoor_windowsensor_alarm
+        to: "on"
+    condition:
+      - condition: not
+        conditions:
+          - condition: state
+            entity_id: sensor.gateway_alarm_alarmstate
+            state: "Disarmed"
+    action:
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "Front door opened while alarm is active"
+```
+
+#### Low battery alert
+
+```yaml
+automation:
+  - alias: "Homely low battery"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.gateway_devices_battery
+        to: "on"
+    action:
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "One or more Homely sensors have a low battery"
+```
+
+> **Tip:** The exact entity IDs depend on your home name and device names
+> in Homely. Check *Settings → Devices & Services → MQTT* or use the HA
+> developer tools (*Developer Tools → States*) to find the correct IDs.
 
 ## Configuration
 
