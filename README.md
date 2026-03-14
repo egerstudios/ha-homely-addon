@@ -35,3 +35,11 @@ See [DOCS.md](homely-mqtt/DOCS.md) for full configuration options.
 
 - A Homely alarm subscription with API access (request from Homely support)
 - An MQTT broker (the [Mosquitto](https://github.com/home-assistant/addons/tree/master/mosquitto) addon works out of the box)
+
+## License & attribution
+
+This project is licensed under the [GNU Affero General Public License v3](LICENSE) (AGPL-3.0).
+
+It is a Home Assistant addon reimplementation based on the concepts and API knowledge from
+[homely-tools](https://github.com/hansrune/homely-tools) by
+[hansrune](https://github.com/hansrune), which is also licensed under AGPL-3.0.

@@ -3,6 +3,13 @@
 
 Bridges the Homely alarm system to MQTT with Home Assistant auto-discovery.
 Supports real-time updates via WebSocket (Socket.IO) with periodic polling fallback.
+
+Based on homely-tools by hansrune <https://github.com/hansrune/homely-tools>.
+Reimplemented as a single-file Home Assistant addon with HA-native config,
+MQTT authentication, and improved device detection.
+
+License: GNU Affero General Public License v3 (AGPL-3.0)
+         https://www.gnu.org/licenses/agpl-3.0.html
 """
 
 import json
