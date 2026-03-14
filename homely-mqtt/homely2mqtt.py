@@ -448,12 +448,13 @@ def main() -> None:
     if mqtt_username:
         mq.username_pw_set(mqtt_username, mqtt_password)
 
-    @mq.on_connect_filtered
     def _on_connect(client, userdata, flags, reason_code, props):
         if reason_code == 0:
             logger.info("MQTT connected to %s:%d", mqtt_host, mqtt_port)
         else:
             logger.error("MQTT connection failed: %s", reason_code)
+
+    mq.on_connect = _on_connect
 
     mq.connect(mqtt_host, port=mqtt_port, keepalive=600)
     mq.loop_start()
