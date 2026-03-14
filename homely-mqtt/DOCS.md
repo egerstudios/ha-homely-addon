@@ -14,7 +14,18 @@ Before starting this addon you need:
 1. **Mosquitto broker addon** — Install it from the addon store
    (*Settings → Add-ons → Add-on Store → Mosquitto broker*) and start it.
 
-2. **MQTT integration in Home Assistant** — Go to
+2. **A dedicated MQTT user** — The Mosquitto addon uses Home Assistant user
+   accounts for authentication. Create a service account for this addon:
+   - Go to *Settings → People → Users*
+     (enable **Advanced mode** in your profile if the Users tab is hidden)
+   - Click **Add User**
+   - Set a username (e.g. `homely`) and a strong password
+   - Uncheck **Can login** — this restricts it to service use only
+   - Click **Create**
+   - Enter this username and password in the addon's `mqtt_username` /
+     `mqtt_password` config options below
+
+3. **MQTT integration in Home Assistant** — Go to
    *Settings → Devices & Services → + Add Integration → MQTT*
    and follow the prompts. If you are using the Mosquitto addon,
    Home Assistant will likely offer to configure it automatically.
