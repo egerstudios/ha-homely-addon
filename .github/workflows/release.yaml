@@ -1,0 +1,56 @@
+name: Release
+
+# Triggers whenever config.yaml is changed on main — extracts the version
+# and creates a matching GitHub Release if one doesn't already exist.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "homely-mqtt/config.yaml"
+
+jobs:
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract version from config.yaml
+        id: version
+        run: |
+          VERSION=$(grep '^version:' homely-mqtt/config.yaml | awk '{print $2}' | tr -d '"')
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Check if release already exists
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "v${{ steps.version.outputs.version }}" > /dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub Release
+        if: steps.check.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" \
+            --title "Homely MQTT ${{ steps.version.outputs.tag }}" \
+            --notes "## Homely MQTT ${{ steps.version.outputs.tag }}
+
+          See [DOCS.md](https://github.com/${{ github.repository }}/blob/main/homely-mqtt/DOCS.md) for setup and configuration.
+
+          ### Installing / Updating
+          Home Assistant will show an **Update** button in the addon UI automatically.
+          If it doesn't appear immediately, go to *Settings → Add-ons → Homely MQTT* and
+          click **Check for updates**." \
+            --latest
