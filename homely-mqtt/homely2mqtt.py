@@ -369,7 +369,7 @@ class MQTTDevice:
             self.discovery_topic, payload=payload, qos=0, retain=True
         )
 
-    def publish(self, message: str, timestamp: Optional[str] = None) -> bool:
+    def publish(self, message: str, timestamp: Optional[str] = None, retain: bool = False) -> bool:
         """Publish a state update, deduplicating by timestamp or value+interval."""
         now = int(time.time())
 
@@ -379,7 +379,7 @@ class MQTTDevice:
                     "%s: same timestamp, skipping", self.friendly_name
                 )
                 return False
-            self.client.publish(self.state_topic, message)
+            self.client.publish(self.state_topic, message, retain=retain)
             self.last_timestamp = timestamp
             self.last_update = now
             self.logger.info("%s => %s", self.friendly_name, message)
@@ -389,7 +389,7 @@ class MQTTDevice:
             self.last_state != message
             or now > self.last_update + self.send_interval
         ):
-            self.client.publish(self.state_topic, message)
+            self.client.publish(self.state_topic, message, retain=retain)
             self.last_state = message
             self.last_update = now
             self.logger.info("%s => %s", self.friendly_name, message)
@@ -410,14 +410,21 @@ class MQTTDevice:
 
 _ALARM_STATES = {
     "DISARMED": "Disarmed",
+    # API-documented state names
+    "ARMED_AWAY": "Armed away",
+    "ARMED_NIGHT": "Armed night",
+    "ARMED_PARTLY": "Armed stay",         # partial/stay arm per API docs
+    "ALARM_PENDING": "Alarm pending",     # pre-alarm grace period (triggered but not yet breached)
+    "ALARM_STAY_PENDING": "Alarm stay pending",
+    "ARMED_NIGHT_PENDING": "Arming night",
+    "ARMED_AWAY_PENDING": "Arming away",
+    "BREACHED": "Alarmed",
+    # Alternate/legacy key names kept as fallback
+    "ARMED_STAY": "Armed stay",
     "ARM_PENDING": "Arming",
     "ARM_STAY_PENDING": "Arming stay",
-    "ARMED_STAY": "Armed stay",
     "ARM_NIGHT_PENDING": "Arming night",
-    "ARMED_NIGHT": "Armed night",
     "ARM_AWAY_PENDING": "Arming away",
-    "ARMED_AWAY": "Armed away",
-    "BREACHED": "Alarmed",
 }
 
 
@@ -535,8 +542,10 @@ def main() -> None:
 
     # --- Alarm state publisher ---
     def publish_alarm(state_str: str) -> None:
+        if not state_str:
+            return
         friendly = _ALARM_STATES.get(state_str, f"Unknown ({state_str})")
-        alarm_dev.publish(friendly)
+        alarm_dev.publish(friendly, retain=True)
 
     publish_alarm(hs.get("alarmState", "DISARMED"))
 
@@ -560,7 +569,7 @@ def main() -> None:
                             {"temperature": value}, timestamp=ts
                         )
 
-                elif state_name == "alarm":
+                elif state_name in ("alarm", "flood"):
                     onoff = "ON" if value else "OFF"
                     for subtype in (
                         "motion", "door", "window",
@@ -633,7 +642,7 @@ def main() -> None:
                                 {"temperature": value}, timestamp=ts
                             )
 
-                    elif state_name == "alarm":
+                    elif state_name in ("alarm", "flood"):
                         onoff = "ON" if value else "OFF"
                         for subtype in (
                             "motion", "door", "window",

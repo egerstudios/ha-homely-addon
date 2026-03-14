@@ -1,6 +1,6 @@
 name: "Homely MQTT"
 description: "Bridges the Homely alarm system to MQTT with Home Assistant auto-discovery. Supports real-time updates via WebSocket and periodic polling."
-version: "1.0.0"
+version: "1.0.1"
 slug: "homely_mqtt"
 url: "https://github.com/egerstudios/ha-homely-addon"
 init: false
